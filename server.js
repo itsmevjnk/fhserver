@@ -71,7 +71,7 @@ const upload = multer({
         },
         filename: (req, file, cb) => {
             let ogName = path.parse(file.originalname); // original name
-            cb(null, `${crypto.randomUUID().replace('-', '')}${ogName.ext}`)
+            cb(null, `${crypto.randomUUID().toString().replaceAll('-', '')}${ogName.ext}`)
         }
     })
 }).single('file');
