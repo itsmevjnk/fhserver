@@ -27,19 +27,19 @@ pipeline {
             steps {
                 sh '''
                     mkdir -p files && chmod 777 files
-                    docker run -dt -v ./files:/files -p 3000:3000 --name fhserver_jenkins_test itsmevjnk/fhserver:${BUILD_NUMBER}
+                    docker run -dt -v ./files:/files -p 3000 --name fhserver_jenkins_${BUILD_NUMBER} itsmevjnk/fhserver:${BUILD_NUMBER}
+                    PORT=$(docker port fhserver_jenkins_${BUILD_NUMBER} | gawk 'match($0, /^.*:(.*)$/, a) {print a[1]}' | head -n 1)
                     npm install --dev
-                    npm test
+                    PORT=$PORT npm test
                 '''
             }
             
             post {
                 always {
                     sh '''
-                        docker logs fhserver_jenkins_test > test_container.log
-                        docker stop fhserver_jenkins_test
-                        docker rm fhserver_jenkins_test
-                        rm -rf files
+                        docker logs fhserver_jenkins_${BUILD_NUMBER} > test_container.log
+                        docker stop fhserver_jenkins_${BUILD_NUMBER}
+                        docker rm fhserver_jenkins_${BUILD_NUMBER}
                     '''
                     archiveArtifacts artifacts: 'test_container.log'
                 }
@@ -72,6 +72,31 @@ pipeline {
                 timeout(time: 1, unit: 'HOURS') {
                     waitForQualityGate abortPipeline: true
                 }
+            }
+        }
+
+        stage('Deploy to staging') {
+            steps {
+                sh '''
+                    docker stop fhserver_staging || true
+                    docker rm fhserver_staging || true
+                    docker run -dt -v ./files:/files -p 3000:3000 --name fhserver_staging itsmevjnk/fhserver:${BUILD_NUMBER}
+                ''' // reuse container from testing stage
+                echo 'Staging server is available on https://itsmevjnk.mooo.com/vm/fhserver'
+            }
+        }
+
+        stage('Wait for release approval') {
+            steps {
+                timeout(time: 3, unit: 'DAYS') {
+                    input message: 'Do you want to release this build to Docker Hub?', ok: 'Yes'
+                }
+            }
+        }
+
+        stage('Release') {
+            steps {
+                sh 'docker push itsmevjnk/fhserver:${BUILD_NUMBER}'
             }
         }
     }
