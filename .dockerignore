@@ -1,6 +1,9 @@
 node_modules/
+files/
 config.json
 Dockerfile
 .gitignore
 *.dat
 test.js
+*.log
+*.tar.gz
