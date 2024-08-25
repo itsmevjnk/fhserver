@@ -30,7 +30,7 @@ pipeline {
                     docker run -dt -v ./files:/files -p 3000 --name fhserver_jenkins_${BUILD_NUMBER} itsmevjnk/fhserver:${BUILD_NUMBER}
                     PORT=$(docker port fhserver_jenkins_${BUILD_NUMBER} | gawk 'match($0, /^.*:(.*)$/, a) {print a[1]}' | head -n 1)
                     npm install --dev
-                    PORT=$PORT npm test
+                    URL="http://127.0.0.1:$PORT" npm test
                 '''
             }
             
