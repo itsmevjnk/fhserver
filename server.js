@@ -169,6 +169,15 @@ app.delete('/admin/keys/:key', (req, res) => {
     });
 });
 
+/* health check */
+app.get('/healthcheck', (req, res) => {
+    res.json({
+        status: 200,
+        message: 'fhserver operational',
+        time: Date.now()
+    });
+});
+
 app.all('*', notFound);
 
 app.listen(config.port, () => {
