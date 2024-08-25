@@ -63,11 +63,19 @@ app.post('/upload', (req, res) => {
                 message: 'Internal server error',
                 time: Date.now()
             });
-        } else res.json({
-            status: 200,
-            message: req.file.filename,
-            time: Date.now()
-        });
+        } else if('file' in req) {
+            res.json({
+                status: 200,
+                message: req.file.filename,
+                time: Date.now()
+            });
+        } else {
+            res.status(400).json({
+                status: 400,
+                message: 'File not uploaded',
+                time: Date.now()
+            });
+        }
     })
 });
 
