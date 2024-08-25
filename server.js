@@ -1,4 +1,4 @@
-var fs = require('fs');
+const fs = require('fs');
 
 const CONFIG_FILE = process.env.CONFIG_FILE || `${process.cwd()}/config.json`;
 
@@ -8,7 +8,7 @@ const defaultConfig = {
     adminIps: ['127.0.0.1', '::1', '172.17.0.1', '::ffff:172.17.0.1']
 }; // default config
 
-var config = {}; // server config
+let config = {}; // server config
 if(!fs.existsSync(CONFIG_FILE)) {
     console.log(`Configuration file at ${CONFIG_FILE} not found - new file will be created.`);
 } else {
@@ -32,7 +32,7 @@ const saveConfig = () => {
 saveConfig();
 
 /* authorised API keys list */
-var authorisedKeys = [];
+let authorisedKeys = [];
 const AUTHORISED_KEYS_FILE = config.fileStore + '/authorisedKeys.json';
 if(fs.existsSync(AUTHORISED_KEYS_FILE)) {
     console.log(`Loading authorised keys from ${AUTHORISED_KEYS_FILE}.`);
