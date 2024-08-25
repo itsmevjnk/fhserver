@@ -5,7 +5,9 @@ RUN mkdir -p /home/node/fhserver/node_modules && chown -R node:node /home/node/f
 WORKDIR /home/node/fhserver
 
 USER node
-COPY --chown=node:node . ./
+COPY --chown=node:node package*.json ./
+COPY --chown=node:node server.js ./
+COPY --chown=node:node LICENSE ./
 RUN echo '{"fileStore":"/files"}' > ./config.json
 RUN npm install --omit=dev
 
