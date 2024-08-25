@@ -5,7 +5,7 @@ const CONFIG_FILE = process.env.CONFIG_FILE || `${process.cwd()}/config.json`;
 const defaultConfig = {
     port: 3000,
     fileStore: 'files/',
-    adminIps: ['127.0.0.1', '::1', '172.17.0.1', '::ffff:172.17.0.1']
+    adminIps: ['127.0.0.1', '::1', '172.17.0.1', '::ffff:172.17.0.1', '::ffff:127.0.0.1']
 }; // default config
 
 let config = {}; // server config

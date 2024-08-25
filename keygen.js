@@ -10,7 +10,7 @@ http.request({
     res.on('data', (chunk) => {
         let result = JSON.parse(chunk);
         if(result.status != 200) {
-            console.error(`Request failed (status code ${result.status})`);
+            console.error(`Request failed (status code ${result.status} - ${result.message})`);
             process.exit(1);
         }
         
