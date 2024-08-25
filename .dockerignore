@@ -7,3 +7,4 @@ Dockerfile
 test.js
 *.log
 *.tar.gz
+sonar-project.properties
