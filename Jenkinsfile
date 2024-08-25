@@ -80,7 +80,7 @@ pipeline {
                 sh '''
                     docker stop fhserver_staging || true
                     docker rm fhserver_staging || true
-                    docker run -dt -v ./files:/files -p 3000:3000 --name fhserver_staging itsmevjnk/fhserver:${BUILD_NUMBER}
+                    docker run -dt -v ./files:/files -p 3000:3000 --restart=always --name fhserver_staging itsmevjnk/fhserver:${BUILD_NUMBER}
                 ''' // reuse container from testing stage
                 echo 'Staging server is available on https://itsmevjnk.mooo.com/vm/fhserver'
             }
