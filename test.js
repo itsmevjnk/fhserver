@@ -2,43 +2,54 @@ const axios = require('axios');
 const crypto = require('crypto');
 const fs = require('fs');
 
-/* generate random bytes for data */
-const dataLen = Number(process.env.DATA_LEN || 4096);
-const data = crypto.randomBytes(dataLen);
-
-/* generate boundary */
-const boundary = '--------------------------' + crypto.randomBytes(16).toString('hex');
-
-/* upload file to server */
-const form = new FormData();
-form.append('file', new Blob([data]));
-axios.post(`${process.env.URL || 'http://127.0.0.1:3000'}/upload`, form).then((resp) => {
+/* generate key */
+axios.post(`${process.env.URL || 'http://127.0.0.1:3000'}/admin/keys`).then((resp) => {
     if(resp.status != 200) {
-        console.error(`Invalid response code ${resp.status} while uploading`);
+        console.error(`Invalid response code ${resp.status} while generating key`);
         process.exit(1);
     }
-    let fileName = resp.data.message;
-    console.log(`Uploaded to server as ${fileName}`);
 
-    axios.get(`${process.env.URL || 'http://127.0.0.1:3000'}/${fileName}`, { responseType: 'arraybuffer' }).then((resp) => {
+    const key = resp.data.message;
+    console.log(`Generated API key: ${key}`);
+
+    /* generate random bytes for data */
+    const dataLen = Number(process.env.DATA_LEN || 4096);
+    const data = crypto.randomBytes(dataLen);
+
+    /* generate boundary */
+    const boundary = '--------------------------' + crypto.randomBytes(16).toString('hex');
+
+    /* upload file to server */
+    const form = new FormData();
+    form.append('file', new Blob([data]));
+    axios.post(`${process.env.URL || 'http://127.0.0.1:3000'}/upload`, form, { headers: {'Authorization': key} }).then((resp) => {
         if(resp.status != 200) {
-            console.error(`Invalid response code ${resp.status} while downloading`);
+            console.error(`Invalid response code ${resp.status} while uploading`);
             process.exit(1);
         }
+        let fileName = resp.data.message;
+        console.log(`Uploaded to server as ${fileName}`);
 
-        /* calculate hash for random data */
-        const dataHash = crypto.createHash('sha256').update(data).digest('hex');
-        console.log('Original data hash :', dataHash);
+        axios.get(`${process.env.URL || 'http://127.0.0.1:3000'}/${fileName}`, { responseType: 'arraybuffer' }).then((resp) => {
+            if(resp.status != 200) {
+                console.error(`Invalid response code ${resp.status} while downloading`);
+                process.exit(1);
+            }
 
-        /* calculate received data hash */
-        const recvHash = crypto.createHash('sha256').update(resp.data).digest('hex');
-        console.log('Downloaded data hash :', recvHash);
+            /* calculate hash for random data */
+            const dataHash = crypto.createHash('sha256').update(data).digest('hex');
+            console.log('Original data hash :', dataHash);
 
-        if(recvHash != dataHash) {
-            console.error('Received data does NOT match original data!');
-            fs.writeFileSync('data_orig.dat', data);
-            fs.writeFileSync('data_recv.dat', resp.data);
-            process.exit(1);
-        } else console.log('Received data verified successfully');
+            /* calculate received data hash */
+            const recvHash = crypto.createHash('sha256').update(resp.data).digest('hex');
+            console.log('Downloaded data hash :', recvHash);
+
+            if(recvHash != dataHash) {
+                console.error('Received data does NOT match original data!');
+                fs.writeFileSync('data_orig.dat', data);
+                fs.writeFileSync('data_recv.dat', resp.data);
+                process.exit(1);
+            } else console.log('Received data verified successfully');
+        });
     });
 });

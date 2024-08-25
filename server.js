@@ -5,7 +5,7 @@ const CONFIG_FILE = process.env.CONFIG_FILE || `${process.cwd()}/config.json`;
 const defaultConfig = {
     port: 3000,
     fileStore: 'files/',
-    adminIps: ['127.0.0.1', '::1']
+    adminIps: ['127.0.0.1', '::1', '172.17.0.1', '::ffff:172.17.0.1']
 }; // default config
 
 var config = {}; // server config
@@ -31,12 +31,33 @@ const saveConfig = () => {
 };
 saveConfig();
 
+/* authorised API keys list */
+var authorisedKeys = [];
+const AUTHORISED_KEYS_FILE = config.fileStore + '/authorisedKeys.json';
+if(fs.existsSync(AUTHORISED_KEYS_FILE)) {
+    console.log(`Loading authorised keys from ${AUTHORISED_KEYS_FILE}.`);
+    authorisedKeys = JSON.parse(fs.readFileSync(AUTHORISED_KEYS_FILE, {encoding: 'utf8'}));
+}
+
+const saveKeys = () => {
+    fs.writeFileSync(AUTHORISED_KEYS_FILE, JSON.stringify(authorisedKeys), {encoding: 'utf8'});
+};
+saveKeys();
+
 const express = require('express');
 
 const app = express();
 app.use(express.json());
 
 /* file serving */
+const notFound = (req, res) => {
+    res.status(404).json({
+        status: 404,
+        message: `Cannot ${req.method} ${req.originalUrl}`,
+        time: Date.now()
+    });
+};
+app.get('/authorisedKeys.json', notFound); // hide authorised keys file
 app.use(express.static(config.fileStore));
 
 /* file uploading */
@@ -55,6 +76,12 @@ const upload = multer({
     })
 }).single('file');
 app.post('/upload', (req, res) => {
+    if(!authorisedKeys.includes(req.headers.authorization))
+        return res.status(401).json({
+            status: 401,
+            message: 'Invalid API key',
+            time: Date.now()
+        });
     upload(req, res, (err) => {
         if(err) {
             console.log(err);
@@ -107,13 +134,42 @@ app.get('/admin/ls', (req, res) => {
     })
 });
 
-app.all('*', (req, res) => {
-    res.status(404).json({
-        status: 404,
-        message: `Cannot ${req.method} ${req.originalUrl}`,
+app.get('/admin/keys', (req, res) => {
+    res.json({
+        status: 200,
+        message: authorisedKeys,
         time: Date.now()
     });
 });
+
+app.post('/admin/keys', (req, res) => {
+    let key = crypto.randomUUID().toString().replaceAll('-', '');
+    authorisedKeys.push(key); saveKeys();
+    res.json({
+        status: 200,
+        message: key,
+        time: Date.now()
+    });
+});
+
+app.delete('/admin/keys/:key', (req, res) => {
+    let idx = authorisedKeys.indexOf(req.params.key);
+    if(idx > -1) {
+        authorisedKeys.splice(idx, 1);
+        saveKeys();
+        res.json({
+            status: 200,
+            message: req.params.key,
+            time: Date.now()
+        });
+    } else res.status(404).json({
+        status: 404,
+        message: `Key ${req.params.key} does not exist`,
+        time: Date.now()
+    });
+});
+
+app.all('*', notFound);
 
 app.listen(config.port, () => {
     console.log(`Listening on port ${config.port}.`);

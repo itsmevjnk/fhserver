@@ -4,7 +4,8 @@
   "description": "A simple and easily-deployable file hosting server",
   "main": "server.js",
   "scripts": {
-    "test": "node test.js"
+    "test": "node test.js",
+    "keygen": "node keygen.js"
   },
   "repository": {
     "type": "git",
