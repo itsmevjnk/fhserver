@@ -11,8 +11,8 @@ pipeline {
         stage('Build') {
             steps {
                 sh '''
-                    docker build -t itsmevjnk/fhserver .
-                    docker save itsmevjnk/fhserver | gzip > fhserver.tar.gz
+                    docker build -t itsmevjnk/fhserver:${BUILD_NUMBER} .
+                    docker save itsmevjnk/fhserver:${BUILD_NUMBER} | gzip > fhserver_${BUILD_NUMBER}.tar.gz
                 '''
             }
             
@@ -27,7 +27,7 @@ pipeline {
             steps {
                 sh '''
                     mkdir -p files && chmod 777 files
-                    docker run -dt -v ./files:/files -p 3000:3000 --name fhserver_jenkins_test itsmevjnk/fhserver
+                    docker run -dt -v ./files:/files -p 3000:3000 --name fhserver_jenkins_test itsmevjnk/fhserver:${BUILD_NUMBER}
                     npm install --dev
                     npm test
                 '''
