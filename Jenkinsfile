@@ -96,7 +96,12 @@ pipeline {
 
         stage('Release') {
             steps {
-                sh 'docker push itsmevjnk/fhserver:${BUILD_NUMBER}'
+                sh '''
+                    docker push itsmevjnk/fhserver:${BUILD_NUMBER}
+                    
+                    docker tag itsmevjnk/fhserver:${BUILD_NUMBER} itsmevjnk/fhserver:latest
+                    docker push itsmevjnk/fhserver:latest
+                '''
             }
         }
     }
