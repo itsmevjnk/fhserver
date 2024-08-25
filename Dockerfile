@@ -7,7 +7,7 @@ WORKDIR /home/node/fhserver
 USER node
 COPY --chown=node:node . ./
 RUN echo '{"fileStore":"/files"}' > ./config.json
-RUN npm install
+RUN npm install --omit=dev
 
 EXPOSE 3000
 CMD ["npm", "start"]
