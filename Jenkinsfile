@@ -46,7 +46,7 @@ pipeline {
             }
         }
 
-        stage('Code quality analysis - SonarQube') {
+        stage('Code quality analysis - SonarQube (staging)') {
             environment {
                 SCANNER_HOME = tool 'SonarQubeScanner';
             }
@@ -54,6 +54,23 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh '${SCANNER_HOME}/bin/sonar-scanner'
+                }
+            }
+        }
+
+        stage('Code quality analysis - Snyk') {
+            steps {
+                snykSecurity(
+                    snykInstallation: 'Snyk',
+                    snykTokenId: 'snyk-token'
+                )
+            }
+        }
+
+        stage('Code quality analysis - SonarQube (wait for completion)') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
